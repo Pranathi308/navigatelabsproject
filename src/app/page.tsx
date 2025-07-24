@@ -1,7 +1,8 @@
 import { TextToImage } from '@/components/text-to-image';
 import { ImageToText } from '@/components/image-to-text';
+import { History } from '@/components/history';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Camera, Bot } from 'lucide-react';
+import { Camera, Bot, History as HistoryIcon } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -17,7 +18,7 @@ export default function Home() {
         </div>
         
         <Tabs defaultValue="text-to-image" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-12">
+          <TabsList className="grid w-full grid-cols-3 h-12">
             <TabsTrigger value="text-to-image" className="text-base">
               <Bot className="mr-2 h-5 w-5" />
               Text to Image
@@ -26,12 +27,19 @@ export default function Home() {
               <Camera className="mr-2 h-5 w-5" />
               Image to Text
             </TabsTrigger>
+            <TabsTrigger value="history" className="text-base">
+              <HistoryIcon className="mr-2 h-5 w-5" />
+              History
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="text-to-image">
              <TextToImage />
           </TabsContent>
           <TabsContent value="image-to-text">
             <ImageToText />
+          </TabsContent>
+          <TabsContent value="history">
+            <History />
           </TabsContent>
         </Tabs>
       </div>

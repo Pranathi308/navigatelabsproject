@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { generateImageFromText, GenerateImageFromTextInput } from "@/ai/flows/generate-image-from-text";
+import { addImageToHistory } from "@/services/imageService";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -47,6 +48,7 @@ export function TextToImage() {
       const result = await generateImageFromText(input);
       if (result.image) {
         setImageUrl(result.image);
+        await addImageToHistory(prompt, result.image);
       } else {
         throw new Error("Image generation failed to return an image.");
       }

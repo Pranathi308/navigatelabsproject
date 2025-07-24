@@ -1,4 +1,3 @@
-
 // Text-to-image generation flow.
 'use server';
 /**
@@ -14,17 +13,19 @@ import {z} from 'genkit';
 
 const GenerateImageFromTextInputSchema = z.object({
   prompt: z.string().describe('The text prompt to generate the image from.'),
+  count: z.number().min(1).max(4).default(1).describe('The number of images to generate.'),
 });
 export type GenerateImageFromTextInput = z.infer<
   typeof GenerateImageFromTextInputSchema
 >;
 
 const GenerateImageFromTextOutputSchema = z.object({
-  image: z
+  images: z.array(z
     .string()
     .describe(
       "The generated image as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
-    ),
+    )
+  ).describe('An array of generated images.'),
 });
 export type GenerateImageFromTextOutput = z.infer<
   typeof GenerateImageFromTextOutputSchema
@@ -42,20 +43,23 @@ const generateImageFromTextFlow = ai.defineFlow(
     inputSchema: GenerateImageFromTextInputSchema,
     outputSchema: GenerateImageFromTextOutputSchema,
   },
-  async input => {
-    const {media} = await ai.generate({
+  async (input) => {
+    const {message} = await ai.generate({
       model:
-        'googleai/gemini-2.0-flash-preview-image-generation', // Use exactly this model to generate images
+        'googleai/gemini-2.0-flash-preview-image-generation', 
       prompt: input.prompt,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
+        numberOfImages: input.count,
       },
     });
 
-    if (!media?.url) {
+    const images = message.content.filter(p => p.media).map(p => p.media!.url);
+
+    if (!images || images.length === 0) {
       throw new Error('No image was generated.');
     }
 
-    return {image: media.url};
+    return {images};
   }
 );

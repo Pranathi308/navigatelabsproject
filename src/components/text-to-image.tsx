@@ -1,20 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { generateImageFromText } from "@/ai/flows/generate-image-from-text";
+import { generateImageFromText, GenerateImageFromTextInput } from "@/ai/flows/generate-image-from-text";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wand2, Loader2 } from "lucide-react";
+import { Wand2, Loader2, Download } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export function TextToImage() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [numImages, setNumImages] = useState(1);
   const { toast } = useToast();
+
+  const handleDownload = (url: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${prompt.substring(0, 20) || 'generated-image'}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +40,13 @@ export function TextToImage() {
     }
 
     setLoading(true);
-    setImageUrl(null);
+    setImageUrls([]);
 
     try {
-      const result = await generateImageFromText({ prompt });
-      if (result.image) {
-        setImageUrl(result.image);
+      const input: GenerateImageFromTextInput = { prompt, count: numImages };
+      const result = await generateImageFromText(input);
+      if (result.images && result.images.length > 0) {
+        setImageUrls(result.images);
       } else {
         throw new Error("Image generation failed to return an image.");
       }
@@ -65,39 +78,72 @@ export function TextToImage() {
             className="resize-none"
             disabled={loading}
           />
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Weaving...
-              </>
-            ) : (
-              <>
-                <Wand2 className="mr-2 h-4 w-4" />
-                Generate Image
-              </>
-            )}
-          </Button>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="num-images">Number of images</Label>
+              <Input
+                id="num-images"
+                type="number"
+                min="1"
+                max="4"
+                value={numImages}
+                onChange={(e) => setNumImages(parseInt(e.target.value, 10))}
+                disabled={loading}
+                className="w-full"
+              />
+            </div>
+            <Button type="submit" className="w-full self-end" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Weaving...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Generate
+                </>
+              )}
+            </Button>
+          </div>
         </form>
         
-        <div className="aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
-          {loading ? (
-            <Skeleton className="h-full w-full" />
-          ) : imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={prompt}
-              width={512}
-              height={512}
-              className="object-contain h-full w-full transition-opacity duration-500 opacity-100"
-              data-ai-hint="generated image"
-            />
-          ) : (
-            <div className="text-center text-muted-foreground p-8">
-              <p>Your generated image will appear here.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {loading && Array.from({ length: numImages }).map((_, i) => (
+             <div key={i} className="aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
+                <Skeleton className="h-full w-full" />
+             </div>
+          ))}
+          {!loading && imageUrls.length > 0 && imageUrls.map((url, i) => (
+            <div key={i} className="group relative aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
+                <Image
+                  src={url}
+                  alt={prompt}
+                  width={512}
+                  height={512}
+                  className="object-contain h-full w-full transition-opacity duration-500 opacity-100"
+                  data-ai-hint="generated image"
+                />
+                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDownload(url)}
+                        className="text-white hover:bg-white/20 hover:text-white"
+                    >
+                        <Download className="h-6 w-6" />
+                    </Button>
+                </div>
             </div>
-          )}
+          ))}
         </div>
+        {!loading && imageUrls.length === 0 && (
+           <div className="aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
+            <div className="text-center text-muted-foreground p-8">
+              <p>Your generated images will appear here.</p>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

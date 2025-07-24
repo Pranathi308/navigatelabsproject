@@ -9,14 +9,11 @@ import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wand2, Loader2, Download } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 
 export function TextToImage() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [numImages, setNumImages] = useState<number | ''>(1);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleDownload = (url: string) => {
@@ -39,24 +36,14 @@ export function TextToImage() {
       return;
     }
     
-    const imageCount = Number(numImages);
-    if (imageCount < 1 || imageCount > 4) {
-      toast({
-        title: "Invalid number of images",
-        description: "Please enter a number between 1 and 4.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
-    setImageUrls([]);
+    setImageUrl(null);
 
     try {
-      const input: GenerateImageFromTextInput = { prompt, count: imageCount };
+      const input: GenerateImageFromTextInput = { prompt };
       const result = await generateImageFromText(input);
-      if (result.images && result.images.length > 0) {
-        setImageUrls(result.images);
+      if (result.image) {
+        setImageUrl(result.image);
       } else {
         throw new Error("Image generation failed to return an image.");
       }
@@ -88,59 +75,31 @@ export function TextToImage() {
             className="resize-none"
             disabled={loading}
           />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="num-images">Number of images</Label>
-              <Input
-                id="num-images"
-                type="number"
-                min="1"
-                max="4"
-                value={numImages}
-                onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '') {
-                        setNumImages('');
-                    } else {
-                        const parsed = parseInt(value, 10);
-                        setNumImages(isNaN(parsed) ? '' : parsed);
-                    }
-                }}
-                onBlur={() => {
-                  if (numImages === '' || Number(numImages) < 1) {
-                    setNumImages(1);
-                  }
-                }}
-                disabled={loading}
-                className="w-full"
-              />
-            </div>
-            <Button type="submit" className="w-full self-end" disabled={loading || !numImages}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Weaving...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="mr-2 h-4 w-4" />
-                  Generate
-                </>
-              )}
-            </Button>
-          </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Weaving...
+              </>
+            ) : (
+              <>
+                <Wand2 className="mr-2 h-4 w-4" />
+                Generate
+              </>
+            )}
+          </Button>
         </form>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {loading && Array.from({ length: Number(numImages) || 1 }).map((_, i) => (
-             <div key={i} className="aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
+        <div className="grid grid-cols-1 gap-4">
+          {loading && (
+             <div className="aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
                 <Skeleton className="h-full w-full" />
              </div>
-          ))}
-          {!loading && imageUrls.length > 0 && imageUrls.map((url, i) => (
-            <div key={i} className="group relative aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
+          )}
+          {!loading && imageUrl && (
+            <div className="group relative aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
                 <Image
-                  src={url}
+                  src={imageUrl}
                   alt={prompt}
                   width={512}
                   height={512}
@@ -151,22 +110,22 @@ export function TextToImage() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDownload(url)}
+                        onClick={() => handleDownload(imageUrl)}
                         className="text-white hover:bg-white/20 hover:text-white"
                     >
                         <Download className="h-6 w-6" />
                     </Button>
                 </div>
             </div>
-          ))}
-        </div>
-        {!loading && imageUrls.length === 0 && (
+          )}
+           {!loading && !imageUrl && (
            <div className="aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
             <div className="text-center text-muted-foreground p-8">
-              <p>Your generated images will appear here.</p>
+              <p>Your generated image will appear here.</p>
             </div>
           </div>
         )}
+        </div>
       </CardContent>
     </Card>
   );

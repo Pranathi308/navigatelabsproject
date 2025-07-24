@@ -13,19 +13,18 @@ import {z} from 'genkit';
 
 const GenerateImageFromTextInputSchema = z.object({
   prompt: z.string().describe('The text prompt to generate the image from.'),
-  count: z.number().min(1).max(4).default(1).describe('The number of images to generate.'),
 });
 export type GenerateImageFromTextInput = z.infer<
   typeof GenerateImageFromTextInputSchema
 >;
 
 const GenerateImageFromTextOutputSchema = z.object({
-  images: z.array(z
+  image: z
     .string()
     .describe(
       "The generated image as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     )
-  ).describe('An array of generated images.'),
+    .describe('The generated image.'),
 });
 export type GenerateImageFromTextOutput = z.infer<
   typeof GenerateImageFromTextOutputSchema
@@ -50,16 +49,16 @@ const generateImageFromTextFlow = ai.defineFlow(
       prompt: input.prompt,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
-        numberOfImages: input.count,
+        numberOfImages: 1,
       },
     });
 
-    const images = message.content.filter(p => p.media).map(p => p.media!.url);
+    const image = message.content.find(p => p.media)?.media?.url;
 
-    if (!images || images.length === 0) {
+    if (!image) {
       throw new Error('No image was generated.');
     }
 
-    return {images};
+    return {image};
   }
 );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { generateImageFromText, GenerateImageFromTextInput } from "@/ai/flows/generate-image-from-text";
 import { addImageToHistory } from "@/services/imageService";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
-export function TextToImage() {
-  const [prompt, setPrompt] = useState("");
+export function TextToImage({ prompt: initialPrompt = '', onPromptUsed }: { prompt?: string, onPromptUsed?: () => void }) {
+  const [prompt, setPrompt] = useState(initialPrompt);
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [highQuality, setHighQuality] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (initialPrompt) {
+      setPrompt(initialPrompt);
+      if (onPromptUsed) {
+        onPromptUsed();
+      }
+    }
+  }, [initialPrompt, onPromptUsed]);
 
   const handleDownload = (url: string) => {
     const link = document.createElement('a');

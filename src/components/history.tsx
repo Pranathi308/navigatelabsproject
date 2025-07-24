@@ -9,7 +9,7 @@ import { Download, RefreshCw, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export function History() {
+export function History({ onReusePrompt }: { onReusePrompt: (prompt: string) => void }) {
   const [history, setHistory] = useState<ImageHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -45,10 +45,10 @@ export function History() {
   };
   
   const handleReusePrompt = (prompt: string) => {
-    navigator.clipboard.writeText(prompt);
+    onReusePrompt(prompt);
     toast({
-        title: "Prompt Copied",
-        description: "The prompt has been copied to your clipboard.",
+        title: "Prompt Loaded",
+        description: "The prompt has been loaded in the generator.",
     });
   };
 

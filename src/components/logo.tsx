@@ -9,27 +9,19 @@ export function Logo() {
       className="mb-4"
     >
       <path
-        d="M20 16L32 28L44 16"
+        d="M12 16L24 48L36 16"
         stroke="hsl(var(--primary))"
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M20 48L32 36L44 48"
+        d="M28 16L40 48L52 16"
         stroke="hsl(var(--primary))"
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path
-        d="M32 28V36"
-        stroke="hsl(var(--primary))"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <rect x="2" y="2" width="60" height="60" rx="10" stroke="hsl(var(--primary))" strokeWidth="3" />
     </svg>
   );
 }

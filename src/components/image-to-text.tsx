@@ -3,22 +3,26 @@
 import { useState, useRef, useCallback } from "react";
 import { generateCaptionFromImage } from "@/ai/flows/generate-caption-from-image";
 import { generateSummaryFromImage } from "@/ai/flows/generate-summary-from-image";
+import { analyzeFormulaFromImage, AnalyzeFormulaFromImageOutput } from "@/ai/flows/analyze-formula-from-image";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileUp, Sparkles, Loader2, Quote, Copy, Check, Text, RefreshCcw } from "lucide-react";
+import { FileUp, Sparkles, Loader2, Quote, Copy, Check, Text, RefreshCcw,Sigma } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type OutputType = 'caption' | 'summary';
+type OutputType = 'caption' | 'summary' | 'formula';
 
 export function ImageToText() {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [caption, setCaption] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
+  const [formula, setFormula] = useState<AnalyzeFormulaFromImageOutput | null>(null);
   const [copied, setCopied] = useState<OutputType | null>(null);
+  const [activeTab, setActiveTab] = useState<OutputType>('caption');
+
 
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +44,7 @@ export function ImageToText() {
         setImageDataUrl(reader.result as string);
         setCaption(null);
         setSummary(null);
+        setFormula(null);
     };
     reader.readAsDataURL(file);
   }
@@ -61,6 +66,7 @@ export function ImageToText() {
   const handleReupload = () => {
     setCaption(null);
     setSummary(null);
+    setFormula(null);
     fileInputRef.current?.click();
   }
 
@@ -77,6 +83,7 @@ export function ImageToText() {
     setLoading(true);
     if (type === 'caption') setCaption(null);
     if (type === 'summary') setSummary(null);
+    if (type === 'formula') setFormula(null);
 
     try {
         if (type === 'caption') {
@@ -86,12 +93,19 @@ export function ImageToText() {
             } else {
                 throw new Error("Caption generation failed.");
             }
-        } else {
+        } else if (type === 'summary') {
             const result = await generateSummaryFromImage({ photoDataUri: imageDataUrl });
             if (result.summary) {
                 setSummary(result.summary);
             } else {
                 throw new Error("Summary generation failed.");
+            }
+        } else {
+            const result = await analyzeFormulaFromImage({ photoDataUri: imageDataUrl });
+            if (result) {
+                setFormula(result);
+            } else {
+                throw new Error("Formula analysis failed.");
             }
         }
     } catch (error) {
@@ -113,11 +127,16 @@ export function ImageToText() {
     setTimeout(() => setCopied(null), 2000);
   }
 
+  const getFormulaText = () => {
+    if (!formula) return null;
+    return `Formula Name: ${formula.formulaName}\n\nUse: ${formula.use}\n\nExample: ${formula.example}`;
+  }
+
   return (
     <Card className="overflow-hidden">
         <CardHeader>
             <CardTitle>AI Image Analyst</CardTitle>
-            <CardDescription>Upload an image to get an AI-generated caption or summary.</CardDescription>
+            <CardDescription>Upload an image to get an AI-generated caption, summary, or formula analysis.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <div 
@@ -163,16 +182,17 @@ export function ImageToText() {
                 )}
             </div>
             
-            <Tabs defaultValue="caption" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+            <Tabs defaultValue="caption" className="w-full" onValueChange={(value) => setActiveTab(value as OutputType)}>
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="caption"><Quote className="mr-2 h-4 w-4"/>Caption</TabsTrigger>
                     <TabsTrigger value="summary"><Text className="mr-2 h-4 w-4"/>Summary</TabsTrigger>
+                    <TabsTrigger value="formula"><Sigma className="mr-2 h-4 w-4"/>Formula</TabsTrigger>
                 </TabsList>
                 <TabsContent value="caption" className="space-y-4 mt-4">
                     <Button onClick={() => handleSubmit('caption')} className="w-full" disabled={!imageDataUrl || loading}>
-                        {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><Sparkles className="mr-2 h-4 w-4" />Generate Caption</>}
+                        {loading && activeTab === 'caption' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><Sparkles className="mr-2 h-4 w-4" />Generate Caption</>}
                     </Button>
-                    {(loading && !caption) || caption ? (
+                    {(loading && activeTab === 'caption' && !caption) || caption ? (
                         <Card className="bg-background">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-lg">Generated Caption</CardTitle>
@@ -183,7 +203,7 @@ export function ImageToText() {
                                 )}
                             </CardHeader>
                             <CardContent>
-                                {loading && !caption ? (
+                                {loading && activeTab === 'caption' && !caption ? (
                                     <div className="space-y-2">
                                         <Skeleton className="h-4 w-full" />
                                         <Skeleton className="h-4 w-4/5" />
@@ -199,9 +219,9 @@ export function ImageToText() {
                 </TabsContent>
                 <TabsContent value="summary" className="space-y-4 mt-4">
                     <Button onClick={() => handleSubmit('summary')} className="w-full" disabled={!imageDataUrl || loading}>
-                        {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><Sparkles className="mr-2 h-4 w-4" />Generate Summary</>}
+                        {loading && activeTab === 'summary' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><Sparkles className="mr-2 h-4 w-4" />Generate Summary</>}
                     </Button>
-                     {(loading && !summary) || summary ? (
+                     {(loading && activeTab === 'summary' && !summary) || summary ? (
                         <Card className="bg-background">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-lg">Generated Summary</CardTitle>
@@ -212,7 +232,7 @@ export function ImageToText() {
                                 )}
                             </CardHeader>
                             <CardContent>
-                                {loading && !summary ? (
+                                {loading && activeTab === 'summary' && !summary ? (
                                     <div className="space-y-2">
                                         <Skeleton className="h-4 w-full" />
                                         <Skeleton className="h-4 w-full" />
@@ -220,6 +240,41 @@ export function ImageToText() {
                                     </div>
                                 ) : (
                                     <p className="text-foreground/90">{summary}</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    ): null}
+                </TabsContent>
+                 <TabsContent value="formula" className="space-y-4 mt-4">
+                    <Button onClick={() => handleSubmit('formula')} className="w-full" disabled={!imageDataUrl || loading}>
+                        {loading && activeTab === 'formula' ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Analyzing...</> : <><Sparkles className="mr-2 h-4 w-4" />Analyze Formula</>}
+                    </Button>
+                     {(loading && activeTab === 'formula' && !formula) || formula ? (
+                        <Card className="bg-background">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <CardTitle className="text-lg">Formula Analysis</CardTitle>
+                                {formula && (
+                                <Button variant="ghost" size="icon" onClick={() => handleCopy(getFormulaText(), 'formula')}>
+                                    {copied === 'formula' ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                </Button>
+                                )}
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {loading && activeTab === 'formula' && !formula ? (
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-1/3" />
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-2/3" />
+                                    </div>
+                                ) : (
+                                    formula && (
+                                        <div className="space-y-2 text-sm text-foreground/90">
+                                            <p><strong className="font-semibold">Formula Name:</strong> {formula.formulaName}</p>
+                                            <p><strong className="font-semibold">Use:</strong> {formula.use}</p>
+                                            <p><strong className="font-semibold">Example:</strong> {formula.example}</p>
+                                        </div>
+                                    )
                                 )}
                             </CardContent>
                         </Card>

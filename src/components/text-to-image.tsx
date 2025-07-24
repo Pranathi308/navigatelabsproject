@@ -16,7 +16,7 @@ export function TextToImage() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [numImages, setNumImages] = useState(1);
+  const [numImages, setNumImages] = useState<number | ''>(1);
   const { toast } = useToast();
 
   const handleDownload = (url: string) => {
@@ -38,12 +38,22 @@ export function TextToImage() {
       });
       return;
     }
+    
+    const imageCount = Number(numImages);
+    if (imageCount < 1 || imageCount > 4) {
+      toast({
+        title: "Invalid number of images",
+        description: "Please enter a number between 1 and 4.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
     setImageUrls([]);
 
     try {
-      const input: GenerateImageFromTextInput = { prompt, count: numImages };
+      const input: GenerateImageFromTextInput = { prompt, count: imageCount };
       const result = await generateImageFromText(input);
       if (result.images && result.images.length > 0) {
         setImageUrls(result.images);
@@ -87,12 +97,25 @@ export function TextToImage() {
                 min="1"
                 max="4"
                 value={numImages}
-                onChange={(e) => setNumImages(parseInt(e.target.value, 10))}
+                onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                        setNumImages('');
+                    } else {
+                        const parsed = parseInt(value, 10);
+                        setNumImages(isNaN(parsed) ? '' : parsed);
+                    }
+                }}
+                onBlur={() => {
+                  if (numImages === '' || Number(numImages) < 1) {
+                    setNumImages(1);
+                  }
+                }}
                 disabled={loading}
                 className="w-full"
               />
             </div>
-            <Button type="submit" className="w-full self-end" disabled={loading}>
+            <Button type="submit" className="w-full self-end" disabled={loading || !numImages}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -109,7 +132,7 @@ export function TextToImage() {
         </form>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {loading && Array.from({ length: numImages }).map((_, i) => (
+          {loading && Array.from({ length: Number(numImages) || 1 }).map((_, i) => (
              <div key={i} className="aspect-square w-full rounded-lg border border-dashed flex items-center justify-center overflow-hidden bg-background">
                 <Skeleton className="h-full w-full" />
              </div>

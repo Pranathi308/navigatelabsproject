@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileUp, Sparkles, Loader2, Quote, Copy, Check, Text, Clipboard } from "lucide-react";
+import { FileUp, Sparkles, Loader2, Quote, Copy, Check, Text, RefreshCcw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -57,6 +57,12 @@ export function ImageToText() {
     event.preventDefault();
     event.stopPropagation();
   };
+
+  const handleReupload = () => {
+    setCaption(null);
+    setSummary(null);
+    fileInputRef.current?.click();
+  }
 
   const handleSubmit = async (type: OutputType) => {
     if (!imageDataUrl) {
@@ -115,8 +121,8 @@ export function ImageToText() {
         </CardHeader>
         <CardContent className="space-y-4">
             <div 
-                className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center text-muted-foreground p-4 cursor-pointer hover:border-primary hover:bg-accent/10 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
+                className="relative group aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center text-muted-foreground p-4 cursor-pointer hover:border-primary hover:bg-accent/10 transition-colors"
+                onClick={() => !imageDataUrl && fileInputRef.current?.click()}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
             >
@@ -128,14 +134,26 @@ export function ImageToText() {
                 className="hidden"
                 />
                 {imageDataUrl ? (
-                <Image
-                    src={imageDataUrl}
-                    alt="Uploaded preview"
-                    width={512}
-                    height={512}
-                    className="object-contain h-full w-full rounded-md"
-                    data-ai-hint="uploaded image"
-                />
+                  <>
+                    <Image
+                        src={imageDataUrl}
+                        alt="Uploaded preview"
+                        width={512}
+                        height={512}
+                        className="object-contain h-full w-full rounded-md"
+                        data-ai-hint="uploaded image"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                            variant="outline"
+                            onClick={handleReupload}
+                            className="text-white bg-transparent hover:bg-white/20 hover:text-white"
+                        >
+                            <RefreshCcw className="mr-2 h-4 w-4" />
+                            Re-upload
+                        </Button>
+                    </div>
+                  </>
                 ) : (
                 <div className="text-center">
                     <FileUp className="mx-auto h-12 w-12" />

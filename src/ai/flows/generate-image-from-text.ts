@@ -49,7 +49,6 @@ const generateImageFromTextFlow = ai.defineFlow(
       prompt: input.prompt,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
-        numberOfImages: 1,
       },
     });
 

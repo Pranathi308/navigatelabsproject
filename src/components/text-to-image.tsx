@@ -7,13 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wand2, Loader2, Download } from "lucide-react";
+import { Wand2, Loader2, Download, Gem } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 export function TextToImage() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [highQuality, setHighQuality] = useState(false);
   const { toast } = useToast();
 
   const handleDownload = (url: string) => {
@@ -40,7 +43,7 @@ export function TextToImage() {
     setImageUrl(null);
 
     try {
-      const input: GenerateImageFromTextInput = { prompt };
+      const input: GenerateImageFromTextInput = { prompt, highQuality };
       const result = await generateImageFromText(input);
       if (result.image) {
         setImageUrl(result.image);
@@ -75,19 +78,31 @@ export function TextToImage() {
             className="resize-none"
             disabled={loading}
           />
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Weaving...
-              </>
-            ) : (
-              <>
-                <Wand2 className="mr-2 h-4 w-4" />
-                Generate
-              </>
-            )}
-          </Button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+                <Gem className="h-4 w-4"/>
+                <Label htmlFor="enhance-quality">High Quality</Label>
+                <Switch 
+                    id="enhance-quality"
+                    checked={highQuality}
+                    onCheckedChange={setHighQuality}
+                    disabled={loading}
+                />
+            </div>
+            <Button type="submit" className="w-fit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Weaving...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Generate
+                </>
+              )}
+            </Button>
+          </div>
         </form>
         
         <div className="grid grid-cols-1 gap-4">

@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const GenerateImageFromTextInputSchema = z.object({
   prompt: z.string().describe('The text prompt to generate the image from.'),
+  highQuality: z.boolean().optional().describe('Whether to generate a high quality image.'),
 });
 export type GenerateImageFromTextInput = z.infer<
   typeof GenerateImageFromTextInputSchema
@@ -43,10 +44,16 @@ const generateImageFromTextFlow = ai.defineFlow(
     outputSchema: GenerateImageFromTextOutputSchema,
   },
   async (input) => {
+    
+    let finalPrompt = input.prompt;
+    if (input.highQuality) {
+        finalPrompt = `${input.prompt}, 4k, high resolution, photorealistic`
+    }
+
     const {media} = await ai.generate({
       model:
         'googleai/gemini-2.0-flash-preview-image-generation', 
-      prompt: input.prompt,
+      prompt: finalPrompt,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },

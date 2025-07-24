@@ -22,7 +22,7 @@ const GenerateImageFromTextOutputSchema = z.object({
   image: z
     .string()
     .describe(
-      "The generated image as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "The generated image as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
 });
 export type GenerateImageFromTextOutput = z.infer<
@@ -43,7 +43,7 @@ const generateImageFromTextFlow = ai.defineFlow(
   },
   async input => {
     const {media} = await ai.generate({
-      model: 'googleai/gemini-pro-vision',
+      model: 'googleai/gemini-1.5-flash',
       prompt: `Generate an image based on the following prompt: ${input.prompt}`,
       config: {
         responseModalities: ['IMAGE'],

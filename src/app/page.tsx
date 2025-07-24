@@ -6,6 +6,7 @@ import { ImageToText } from '@/components/image-to-text';
 import { History } from '@/components/history';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Camera, Bot, History as HistoryIcon } from 'lucide-react';
+import { Logo } from '@/components/logo';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("text-to-image");
@@ -19,7 +20,8 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 bg-background font-body">
       <div className="w-full max-w-2xl">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 flex flex-col items-center">
+            <Logo />
             <h1 className="text-4xl sm:text-5xl font-bold font-headline text-foreground">
               Vision Weaver
             </h1>

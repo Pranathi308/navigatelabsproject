@@ -1,3 +1,4 @@
+
 // Text-to-image generation flow.
 'use server';
 /**
@@ -43,10 +44,11 @@ const generateImageFromTextFlow = ai.defineFlow(
   },
   async input => {
     const {media} = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-preview',
+      model:
+        'googleai/gemini-2.0-flash-preview-image-generation', // Use exactly this model to generate images
       prompt: input.prompt,
       config: {
-        responseModalities: ['IMAGE'],
+        responseModalities: ['TEXT', 'IMAGE'],
       },
     });
 

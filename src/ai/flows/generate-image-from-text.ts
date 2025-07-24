@@ -43,7 +43,7 @@ const generateImageFromTextFlow = ai.defineFlow(
     outputSchema: GenerateImageFromTextOutputSchema,
   },
   async (input) => {
-    const {message} = await ai.generate({
+    const {media} = await ai.generate({
       model:
         'googleai/gemini-2.0-flash-preview-image-generation', 
       prompt: input.prompt,
@@ -52,7 +52,7 @@ const generateImageFromTextFlow = ai.defineFlow(
       },
     });
 
-    const image = message.content.find(p => p.media)?.media?.url;
+    const image = media?.url;
 
     if (!image) {
       throw new Error('No image was generated.');
